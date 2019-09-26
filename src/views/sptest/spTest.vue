@@ -41,12 +41,13 @@ export default class spTest extends Vue {
      private visible:boolean = true;
      private resizable:boolean = true;
      private formatter:any = "$ #.00";
+     private spread:any = null;
 
   /**
    * 声明周期钩子函数
    */
   private mounted():void{
-
+    let spdiv:any = document.getElementById("spTest");
   }
   /**
    * 初始化数据

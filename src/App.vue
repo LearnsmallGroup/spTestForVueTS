@@ -3,7 +3,7 @@
     <div id="nav">
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link> |
-      <router-link to="/spTest">spJSTest</router-link>
+      <router-link to="/spTestHome">SpreadJS</router-link>
     </div>
     <router-view/>
   </div>

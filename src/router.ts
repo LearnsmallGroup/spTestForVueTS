@@ -23,6 +23,16 @@ export default new Router({
       path: '/spTest',
       name: 'spTest',
       component: () => import('./views/sptest/spTest.vue')
+    },
+    {
+      path: '/quickStart',
+      name: 'quickStart',
+      component: () => import('./views/sptest/firstQuickStart.vue')
+    },
+    {
+      path: '/spTestHome',
+      name: 'spTestHome',
+      component: () => import('./views/sptest/spTestHome.vue')
     }
   ]
 })
