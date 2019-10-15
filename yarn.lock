@@ -687,6 +687,13 @@
     debug "^3.1.0"
     lodash.once "^4.1.1"
 
+"@grapecity/spread-excelio@^12.2.5":
+  version "12.2.5"
+  resolved "https://registry.npm.taobao.org/@grapecity/spread-excelio/download/@grapecity/spread-excelio-12.2.5.tgz#32d24f66c4793b70d8dfb49bbccef0d41872e60c"
+  integrity sha1-MtJPZsR5O3DY37SbvM7w1Bhy5gw=
+  dependencies:
+    "@grapecity/spread-sheets" "12.2.5"
+
 "@grapecity/spread-sheets-resources-zh@^12.2.5":
   version "12.2.5"
   resolved "https://registry.npm.taobao.org/@grapecity/spread-sheets-resources-zh/download/@grapecity/spread-sheets-resources-zh-12.2.5.tgz#0f7d11bdf69549f1450cf589d4ccd94756a7ce34"
