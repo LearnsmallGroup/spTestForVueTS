@@ -9,6 +9,7 @@
       <button @click="changeLanguage">切换中英文</button>
       <input type='file' @change="processFile($event)"/>
       <button @click="upExcel">前端导入</button>
+      <button @click="getLocaltionIndex">获取坐标</button>
     </div>
     <div id="formulaBar"  contenteditable="true" spellcheck="false" style="font-family: Calibri;border: 1px solid #808080;width:100%;height:35px;background:white;font-size: x-large ;"></div>
     <div id = "workbookDiv" class="host_class"></div>
@@ -25,7 +26,7 @@
           <el-upload
             class="upload-demo"
             ref="upload"
-            action="http://127.0.0.1:11221/dealExcel/uploadFile"
+            action="http://127.0.0.1:11221/dealExcel/uploadFileBySheet"
             :limit="1"
             accept=".ssjson"
             :auto-upload="false"
@@ -46,6 +47,7 @@ import "@grapecity/spread-sheets-resources-zh"
 import GC from "@grapecity/spread-sheets"
 import ajax from '@/config/HttpUtils';
 import COVER from '@/config/LoadingCover';
+import pako from 'pako';
 
 var ExcelIO = require("@grapecity/spread-excelio");
 GC.Spread.Common.CultureManager.culture("zh-cn");
@@ -149,6 +151,7 @@ export default class firstQuickStart extends Vue {
           cancelButtonText: '取消'
         }).then((ms:any) => {
           this.coverObj = this.$loading(this.coverOptions);
+          // ajax.get("/dealExcel/getModelFile/"+ms.value)
           ajax.get("/dealExcel/getModelFile/"+ms.value)
           .then((response:any)=>{
             let div:any = document.getElementById('workbookDiv');
@@ -156,7 +159,7 @@ export default class firstQuickStart extends Vue {
             spread.suspendPaint();
             // let fileJson:string = JSON.stringify(response.model);
             let str:string = response.model;
-            // let sjon:any = JSON.parse(str);
+            // let sjon:any = JSON.parse(JSON.stringify(str));
             // spread.fromJSON(sjon, this.jsonOptions);
             spread.fromJSON(str,this.jsonOptions);
             // let source:string = JSON.stringify(response.source);
@@ -227,6 +230,7 @@ export default class firstQuickStart extends Vue {
         return sheet.getCell(row,col);
       }
   }
+  private cstyle:any = undefined;
   /**
    * 添加右键菜单
    * @create by Kellach 2019年10月9日
@@ -267,18 +271,16 @@ export default class firstQuickStart extends Vue {
           let col:number = result.foundColumnIndex;
           let row:number = result.foundRowIndex;
           let cell:any = sheet.getCell(row,col);
-
           if(col!=-1 && row!=-1){
             cell.tag(null);
-            style.name = 'style1';
-            style.backColor = 'rgb(255,255,255)';
-            sheet.removeNamedStyle("style1");
+            //还原背景色，添加表格线
+            var lineStyle = GC.Spread.Sheets.LineStyle.thin;
+            var lineBorder = new GC.Spread.Sheets.LineBorder( '#D4D4D4',lineStyle);
+            var sheetArea = GC.Spread.Sheets.SheetArea.viewport;
+            sheet.getRange(row,col,1, 1).setBorder(lineBorder, {outline:true}, sheetArea);
             cell.backColor('rgb(255,255,255)');
-            // sheet.setStyle(row, col, style, GC.Spread.Sheets.SheetArea.viewport);
           }
-
           //从新打标
-          style.name = 'style1';
           style.backColor = 'rgb(255,0,0)';
           let selections:any = sheet.getSelections();
           let selectionIndex:number = 0, selectionCount:number = selections.length;
@@ -337,11 +339,63 @@ export default class firstQuickStart extends Vue {
     var self = this;
     let sheet:any = this.getActiveSheet();
     this.spread.suspendPaint();
-    if(this.excelFile.name.substring(this.excelFile.name.lastIndexOf(".")+1) == "ssjson"){
+    // if(this.excelFile.name.substring(this.excelFile.name.lastIndexOf(".")+1) == "ssjson"){
+      if(true){
       var reader = new FileReader();
       reader.readAsText(this.excelFile);
       reader.onload = function () {
+
         var obj:any = this.result;
+        console.log("文件内容：");
+        console.log(escape(obj));
+        console.log("压缩前");
+        console.log(obj.length);
+        var binaryString = pako.gzip(obj,{ to: 'string' });
+        console.log("压缩内容：");
+        console.log(binaryString);
+
+        // let code = encodeURI(binaryString);
+        // console.log("编码大小："+code.length);
+        let config = {
+            //添加请求头
+            // headers: {
+            //     "Content-Type": "multipart/form-data"
+            // }
+        };
+        // ajax.postCommon("/test/upfile",binaryString,config)
+         let data:any = new FormData();
+         data.append('file',binaryString);
+        ajax.postCommon("/test/upfile",data,config)
+          .then((response:any)=>{
+
+          }).catch((error:any)=>{
+            console.log(error);
+          }).finally(()=>{
+
+          });
+
+        // console.log("压缩后");
+        // console.log(binaryString.length);
+        // console.log("还原后")
+        // var charData = binaryString.split('').map(function (x:any) { return x.charCodeAt(0); });
+        // var data:any = pako.inflate(new Uint8Array(charData))
+
+        // var res = '';
+        // var chunk = 8 * 1024;
+        // var i;
+        // for (i = 0; i < data.length / chunk; i++) {
+        //   res += String.fromCharCode.apply(null, data.slice(i * chunk, (i + 1) * chunk));
+        // }
+        // res += String.fromCharCode.apply(null, data.slice(i * chunk));
+        // let restr = unescape(res);
+        // console.log(restr.length);
+        // console.log("还原内容：\n"+restr);
+
+
+
+
+
+        // var obj:any = this.result;
         self.spread.fromJSON(JSON.parse(obj));
         self.spread.resumePaint();
       }
@@ -381,7 +435,70 @@ export default class firstQuickStart extends Vue {
           }
       }
     });
-
+  }
+  /**
+   * 初始化坐标函数
+   * @create by Kellach 2019年10月18日
+   */
+  private getLocaltionIndex():void{
+    let sheet:any = this.getActiveSheet();
+    this.spread.suspendPaint();
+    let that:any = this;
+    sheet.setText(0, 0, "Click anywhere inside of this Spread instance.");
+    let top = this.spread.getHost().offsetTop;
+    let left = this.spread.getHost().offsetLeft;
+    this.spread.getHost().addEventListener('click', function(e:any){
+        var y = e.pageY - top;
+        var x = e.pageX - left;
+        var result = that.spread.hitTest(x, y);
+        var str = that.getHitAreaName(result);
+        if (result) {
+            let res = "(x: " + result.x.toString() + "," + " y:" + result.y.toString() + ")" + " ; " + str;
+            alert(res);
+        }
+    });
+    this.spread.resumePaint();
+  }
+  /**
+   * 获取区域名称
+   */
+  private getHitAreaName(result:any):any{
+    let str:any = "";
+    if(result) {
+        var worksheetHitInfo = result.worksheetHitInfo;
+        var tabStripHitInfo = result.tabStripHitInfo;
+        if (worksheetHitInfo) {
+            var hitTestType = worksheetHitInfo.hitTestType;
+            if (hitTestType === 0) {
+                str = 'corner';
+            } else if (hitTestType === 1) {
+                str = 'colHeader';
+            } else if (hitTestType === 2) {
+                str = 'rowHeader';
+            } else {
+                var row = worksheetHitInfo.row;
+                var col = worksheetHitInfo.col;
+                str = 'viewport; ' + '(row: ' + row + ', col: ' + col + ')';
+            }
+        } else if (tabStripHitInfo) {
+            if (tabStripHitInfo.navButton) {
+                str = tabStripHitInfo.navButton;
+            } else if (tabStripHitInfo.sheetTab) {
+                str = tabStripHitInfo.sheetTab.sheetName;
+            } else if (tabStripHitInfo.resize === true) {
+                str = "resize";
+            } else {
+                str = "blank";
+            }
+        } else if (result.horizontalScrollBarHitInfo) {
+            str = result.horizontalScrollBarHitInfo.element;
+        } else if (result.verticalScrollBarHitInfo) {
+            str = result.verticalScrollBarHitInfo.element;
+        } else if (result.footerCornerHitInfo) {
+            str = result.footerCornerHitInfo.element;
+        }
+    }
+    return str;
   }
 
 }

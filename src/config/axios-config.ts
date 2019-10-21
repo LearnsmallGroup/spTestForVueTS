@@ -14,13 +14,19 @@ axios.defaults.withCredentials=true;
 axios.interceptors.request.use(
     (config:any) => {
         let token: string = "";
-
-        config.headers = (() => {
+        let flag =true;
+        for(var a in config.headers) {
+          if(a == 'Content-Type'){
+            flag=false;
+            break;
+          }
+        }
+        flag && (config.headers = (() => {
             let baseHead: any = {
                 'Content-Type': 'application/json'
             }
             return baseHead;
-        })();
+        })());
         //重写参数序列化函数
         config.paramsSerializer = (param:any):string => {
              return Qs.stringify(param, {arrayFormat: 'brackets'})
