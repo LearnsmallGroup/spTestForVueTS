@@ -3,7 +3,8 @@
     <h1>This is an about quickStart</h1>
     <div class="btns_class_div">
       <button @click="addSheet">addSheet</button>
-      <button @click="upfile">uploadSSjson</button>
+      <button @click="upfile(1)">uploadSSjson</button>
+      <button @click="upfile(2)">导入Excel用Sheet存储</button>
       <button @click="getFileData">获取数据</button>
       <button @click="submitData">提交数据</button>
       <button @click="changeLanguage">切换中英文</button>
@@ -26,10 +27,12 @@
           <el-upload
             class="upload-demo"
             ref="upload"
-            action="http://127.0.0.1:11221/dealExcel/uploadFileBySheet"
+            :action = this.upAction
             :limit="1"
-            accept=".ssjson"
+            :accept= this.acceptType
             :auto-upload="false"
+            :on-success="this.uploadSuccess"
+            :on-error = "this.uploadError"
             :file-list="fileList">
             <el-button slot="trigger" size="small" type="primary">点击上传</el-button>
             <el-button style="margin-left: 10px;" size="small" type="success" @click="submitUpload">上传到服务器</el-button>
@@ -48,6 +51,8 @@ import GC from "@grapecity/spread-sheets"
 import ajax from '@/config/HttpUtils';
 import COVER from '@/config/LoadingCover';
 import pako from 'pako';
+import spconst from '@/common/spjsconst';
+
 
 var ExcelIO = require("@grapecity/spread-excelio");
 GC.Spread.Common.CultureManager.culture("zh-cn");
@@ -66,22 +71,11 @@ export default class firstQuickStart extends Vue {
   /**
    * 把JSON字符串反序列化成对象, 然后再用 fromJSON 来初始化 spread 对象
    */
-  private jsonOptions:any = {
-       ignoreFormula: false, // indicate to ignore style when convert json to workbook, default value is false
-       ignoreStyle: false, // indicate to ignore the formula when convert json to workbook, default value is false
-       frozenColumnsAsRowHeaders: false, // indicate to treat the frozen columns as row headers when convert json to workbook, default value is false
-       frozenRowsAsColumnHeaders: false, // indicate to treat the frozen rows as column headers when convert json to workbook, default value is false
-       doNotRecalculateAfterLoad: false //  indicate to forbid recalculate after load the json, default value is false
-    }
+  private jsonOptions:any = spconst.jsonOptions;
   /**
    * 把 spread toJSON 的返回的对象序列化成JSON字符串。
    */
-  private serializationOption:any = {
-       ignoreStyle: false, // indicate to ignore the style when convert workbook to json, default value is false
-       ignoreFormula: false, // indicate to ignore the formula when convert workbook to json, default value is false
-       rowHeadersAsFrozenColumns: false, // indicate to treat the row headers as frozen columns when convert workbook to json, default value is false
-       columnHeadersAsFrozenRows: false // indicate to treat the column headers as frozen rows when convert workbook to json, default value is false
-    }
+  private serializationOption:any = spconst.serializationOption;
 
   /**
    * 周期函数
@@ -124,13 +118,25 @@ export default class firstQuickStart extends Vue {
   }
   private upVisiable:boolean = false;
   private fileList:Array<any>=[];
+  private upSSjsonaction:string = 'http://127.0.0.1:11221/dealExcel/uploadFile';
+  private upExcelaction:string = 'http://127.0.0.1:11221/dealExcel/uploadFileBySheet';
+  private upAction:string = '';
+  private acceptType:string = '';
   /**
    * 上传文件
    * @create by Kellach 2019年9月29日
    */
-  private upfile():void{
+  private upfile(type:number):void{
+    if(type == 1){
+      this.upAction = this.upSSjsonaction;
+      this.acceptType = '.ssjson';
+    }else if(type == 2){
+      this.upAction = this.upExcelaction;
+      this.acceptType = '.xlsx';
+    }
     this.upVisiable = true;
   }
+
   /**
    * 文件上传关闭时
    */
@@ -138,8 +144,23 @@ export default class firstQuickStart extends Vue {
     this.upVisiable = false;
   }
   private submitUpload():void{
-    this.upVisiable = false;
+    this.coverObj = this.$loading(this.coverOptions);
     (this.$refs.upload as HTMLFormElement).submit();
+  }
+  /**
+   * 上传成功
+   */
+  private uploadSuccess(response:any, file:any, fileList:any){
+    this.upVisiable = false;
+    this.coverObj.close();
+  }
+  /**
+   * 上传失败
+   */
+  private uploadError(err:any, file:any, fileList:any):void{
+    alert("上传失败！\n"+err);
+    this.upVisiable = false;
+    this.coverObj.close();
   }
 
   /**
@@ -171,7 +192,7 @@ export default class firstQuickStart extends Vue {
             //获取table
             let sheet:any = spread.getActiveSheet();
             let table:any = sheet.tables.findByName("gcTable0");
-            table.bindingPath('zysh');
+            table.bindingPath('xssp');
             let source = new GC.Spread.Sheets.Bindings.CellBindingSource(csource);
             sheet.setDataSource(source);
             table.showHeader(false);
@@ -339,8 +360,8 @@ export default class firstQuickStart extends Vue {
     var self = this;
     let sheet:any = this.getActiveSheet();
     this.spread.suspendPaint();
-    // if(this.excelFile.name.substring(this.excelFile.name.lastIndexOf(".")+1) == "ssjson"){
-      if(true){
+    if(this.excelFile.name.substring(this.excelFile.name.lastIndexOf(".")+1) == "ssjson"){
+      // if(true){
       var reader = new FileReader();
       reader.readAsText(this.excelFile);
       reader.onload = function () {
@@ -410,31 +431,7 @@ export default class firstQuickStart extends Vue {
     /**
      * 导入数据的时候，需要绑定校验器
      */
-    self.spread.bind(GC.Spread.Sheets.Events.ValidationError, function(e:any, args:any) {
-      var dv = args.validator;
-      if (dv) {
-          if (dv.showErrorMessage()) {
-              var oldValue = args.sheet.getValue(args.row, args.col);
-              var errorTitle = dv.errorTitle();
-              var errorMessage = dv.errorMessage();
-              var errorStyle = dv.errorStyle();
-              if (errorStyle == GC.Spread.Sheets.DataValidation.ErrorStyle.stop) {
-                  alert(errorMessage);
-                  args.validationResult = GC.Spread.Sheets.DataValidation.DataValidationResult.retry;
-              } else if (errorStyle == GC.Spread.Sheets.DataValidation.ErrorStyle.warning) {
-                  var result = confirm(errorMessage);
-                  if (result) {
-                      args.validationResult = GC.Spread.Sheets.DataValidation.DataValidationResult.discard;
-                  } else {
-                      args.validationResult = GC.Spread.Sheets.DataValidation.DataValidationResult.retry;
-                  }
-              } else { //information
-                  alert(errorMessage);
-                  args.validationResult = GC.Spread.Sheets.DataValidation.DataValidationResult.forceApply;
-              }
-          }
-      }
-    });
+    spconst.bindValitionAlert(self.spread);
   }
   /**
    * 初始化坐标函数
@@ -506,7 +503,7 @@ export default class firstQuickStart extends Vue {
 <style lang="less">
   .host_class{
     width: 100%;
-    height: 800px;
+    height: 650px;
     border: 1px solid gray;
   }
   .btns_class_div{

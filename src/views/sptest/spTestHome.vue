@@ -4,6 +4,7 @@
     <div id="nav">
       <router-link to="/spTest">spTest</router-link> |
       <router-link to="/quickStart">firstQuickStart</router-link> |
+      <router-link to="/testModel">模板测试</router-link>
     </div>
   </div>
 </template>

@@ -33,6 +33,11 @@ export default new Router({
       path: '/spTestHome',
       name: 'spTestHome',
       component: () => import('./views/sptest/spTestHome.vue')
+    },
+    {
+      path: '/testModel',
+      name: 'testModel',
+      component: () => import('./views/sptest/testModel.vue')
     }
   ]
 })
