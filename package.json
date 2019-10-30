@@ -10,9 +10,9 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
-    "@grapecity/spread-excelio": "^12.2.5",
-    "@grapecity/spread-sheets-resources-zh": "^12.2.5",
-    "@grapecity/spread-sheets-vue": "^12.2.5",
+    "@grapecity/spread-excelio": "^13.0.0",
+    "@grapecity/spread-sheets-resources-zh": "^13.0.0",
+    "@grapecity/spread-sheets-vue": "^13.0.0",
     "@types/jquery": "^3.3.31",
     "@types/pako": "^1.0.1",
     "@types/qs": "^6.5.3",
