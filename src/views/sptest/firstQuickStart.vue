@@ -11,6 +11,7 @@
       <input type='file' @change="processFile($event)"/>
       <button @click="upExcel">前端导入</button>
       <button @click="getLocaltionIndex">获取坐标</button>
+      <button @click="repaintTableData">重新渲染tableDataSource数据</button>
     </div>
     <div id="formulaBar"  contenteditable="true" spellcheck="false" style="font-family: Calibri;border: 1px solid #808080;width:100%;height:35px;background:white;font-size: x-large ;"></div>
     <div id = "workbookDiv" class="host_class"></div>
@@ -192,7 +193,11 @@ export default class firstQuickStart extends Vue {
             //获取table
             let sheet:any = spread.getActiveSheet();
             let table:any = sheet.tables.findByName("gcTable0");
+            let table1:any = sheet.tables.findByName("gcTable1");
+            let table2:any = sheet.tables.findByName("gcTable2");
             table.bindingPath('xssp');
+            table1.bindingPath('zysh');
+            table2.bindingPath('lwsr');
             let source = new GC.Spread.Sheets.Bindings.CellBindingSource(csource);
             sheet.setDataSource(source);
             table.showHeader(false);
@@ -275,8 +280,6 @@ export default class firstQuickStart extends Vue {
     let tagFlagFunction:any={
         canUndo: true,
         execute: function (spread:any, options:any) {
-
-
           let sheet:any = spread.getActiveSheet();
           let style:any = new GC.Spread.Sheets.Style();
 
@@ -411,11 +414,6 @@ export default class firstQuickStart extends Vue {
         // let restr = unescape(res);
         // console.log(restr.length);
         // console.log("还原内容：\n"+restr);
-
-
-
-
-
         // var obj:any = this.result;
         self.spread.fromJSON(JSON.parse(obj));
         self.spread.resumePaint();
@@ -496,6 +494,31 @@ export default class firstQuickStart extends Vue {
         }
     }
     return str;
+  }
+  /**
+   * 重新获取数据，并渲染数据
+   * @create by Kellach 2019年11月1日
+   */
+  private repaintTableData():void{
+    let sheet:any = this.getActiveSheet();
+    this.coverObj = this.$loading(this.coverOptions);
+    this.spread.suspendPaint();
+    ajax.get('/dealExcel/getObjData')
+     .then((response:any)=>{
+        //获取table
+        let table:any = sheet.tables.findByName("gcTable0");
+        let source = sheet.getDataSource();
+        source.xf.xssp = response.data;
+        table.bindingPath('xssp');
+        sheet.setDataSource(source);
+     })
+     .catch((error:any)=>{
+       console.log(error);
+     })
+     .finally(()=>{
+       this.coverObj.close();
+       this.spread.resumePaint();
+     });
   }
 
 }

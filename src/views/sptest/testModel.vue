@@ -3,6 +3,7 @@
     <h1>测试模板</h1>
     <div class="btns_class_div">
       <button @click="getFileData">获取数据</button>
+      <button @click="getExcelFileData">获取后台Excel数据</button>
       <button @click="getFileEmptyData">获取空模板数据</button>
       <button @click="reCal">恢复计算</button>
       <button @click="getCurrentSheet">从服务器获取当前sheet内容</button>
@@ -11,6 +12,7 @@
       <button @click="getMessageCount">查询当前校验错误的数量</button>
       <button @click="lockSheetName">锁定解锁sheetName</button>
       <button @click="getGCwb">获取后台拼接的workBook</button>
+      <button @click="getDataFormular">获取公式依赖</button>
     </div>
     <div id="formulaBar"  contenteditable="true" spellcheck="false" style="font-family: Calibri;border: 1px solid #808080;width:100%;height:35px;background:white;font-size: x-large ;"></div>
     <div id = "workbookDiv" class="host_class"></div>
@@ -70,6 +72,43 @@ export default class testModel extends Vue {
             let workbook:any = GC.Spread.Sheets.findControl(div);
             let start = (new Date()).getTime();
             workbook.suspendPaint();
+            workbook.suspendCalcService();
+            let str:string = response.model;
+            workbook.fromJSON(str,spconst.jsonOptions);
+            let csource:any = response.source;
+            spconst.bindValitionAlert(workbook);
+            workbook.resumePaint();
+            let end = (new Date()).getTime();
+            console.log('用时：'+(end-start) +" 毫秒");
+          }).catch((error:any)=>{
+              console.log(error);
+          }).finally(()=>{
+            this.coverObj.close();
+          });
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '取消输入'
+          });
+        });
+  }
+  /**
+   * 获取后台GC渲染的Excel数据
+   * @create by Kellach 2019年10月30日
+   */
+  public getExcelFileData():void{
+    this.$prompt('请输入模板CODE', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        }).then((ms:any) => {
+          this.coverObj = this.$loading(this.coverOptions);
+          ajax.get("/dealExcel/getExcelFile/"+ms.value)
+          .then((response:any)=>{
+            let div:any = document.getElementById('workbookDiv');
+            let workbook:any = GC.Spread.Sheets.findControl(div);
+            let start = (new Date()).getTime();
+            workbook.suspendPaint();
+            workbook.clearSheets();
             workbook.suspendCalcService();
             let str:string = response.model;
             workbook.fromJSON(str,spconst.jsonOptions);
@@ -270,6 +309,14 @@ export default class testModel extends Vue {
     }).finally(()=>{
       this.coverObj.close();
     });
+  }
+  /**
+   * 获取公式依赖
+   * @create by Kellach 2019年10月31日
+   */
+  private getDataFormular():void{
+    let sheet:any = this.workbook.getActiveSheet();
+    debugger;
   }
 }
 </script>

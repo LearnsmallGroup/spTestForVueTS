@@ -14,15 +14,15 @@ export default class spjsconst{
     frozenRowsAsColumnHeaders: false, // indicate to treat the frozen rows as column headers when convert json to workbook, default value is false
     doNotRecalculateAfterLoad: false //  indicate to forbid recalculate after load the json, default value is false
  }
-/**
-* 把 spread toJSON 的返回的对象序列化成JSON字符串。
-*/
-public static serializationOption:any = {
-    ignoreStyle: false, // indicate to ignore the style when convert workbook to json, default value is false
-    ignoreFormula: false, // indicate to ignore the formula when convert workbook to json, default value is false
-    rowHeadersAsFrozenColumns: false, // indicate to treat the row headers as frozen columns when convert workbook to json, default value is false
-    columnHeadersAsFrozenRows: false // indicate to treat the column headers as frozen rows when convert workbook to json, default value is false
- }
+  /**
+  * 把 spread toJSON 的返回的对象序列化成JSON字符串。
+  */
+  public static serializationOption:any = {
+      ignoreStyle: false, // indicate to ignore the style when convert workbook to json, default value is false
+      ignoreFormula: false, // indicate to ignore the formula when convert workbook to json, default value is false
+      rowHeadersAsFrozenColumns: false, // indicate to treat the row headers as frozen columns when convert workbook to json, default value is false
+      columnHeadersAsFrozenRows: false // indicate to treat the column headers as frozen rows when convert workbook to json, default value is false
+  }
 
  /**
   * 绑定数据校验器
